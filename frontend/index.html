@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Flask + Postgres Demo</title>
+</head>
+<body>
+  <h1>Names App</h1>
+
+  <h3>Add a name</h3>
+  <input type="text" id="nameInput" placeholder="Enter a name">
+  <button onclick="addName()">Add</button>
+  <button onclick="deleteName()">Delete</button>
+
+  <h3>Stored names</h3>
+  <ul id="namesList"></ul>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      loadNames();
+    });
+
+    async function addName() {
+      const name = document.getElementById("nameInput").value;
+      if (!name) return alert("Please enter a name");
+
+      const res = await fetch("/api/add-name", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({name})
+      });
+      const data = await res.json();
+      alert(data.message || data.error);
+      document.getElementById("nameInput").value = "";
+      await loadNames();
+    }
+
+    async function deleteName() {
+        const name = document.getElementById("nameInput").value;
+        const res = await fetch(`/api/delete-name/${encodeURIComponent(name)}`, {
+          method: "DELETE"
+        });
+        const data = await res.json();
+        alert(data.message || data.error);
+        document.getElementById("nameInput").value = "";
+        await loadNames();
+    }
+
+    async function loadNames() {
+      const res = await fetch("/api/names");
+      const data = await res.json();
+
+      const list = document.getElementById("namesList");
+      list.innerHTML = "";
+      data.names.forEach(n => {
+        const li = document.createElement("li");
+        li.textContent = `${n.id}: ${n.name} (at ${n.created_at})`;
+        list.appendChild(li);
+      });
+    }
+  </script>
+</body>
+</html>
