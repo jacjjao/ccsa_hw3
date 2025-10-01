@@ -1,0 +1,115 @@
+# Specification for HW3: 3-Tier Web Application with Docker Compose
+
+## 1. System Overview
+The application is a **3-tier web system** where:
+- **Frontend (Nginx + static HTML/JS)** allows users to enter, list, and remove names.
+- **Backend (Flask + Gunicorn)** exposes a REST API to interact with the database.
+- **Database (PostgreSQL)** stores persistent name entries.
+
+---
+
+## 2. Functional Requirements
+
+### 2.1 Database (PostgreSQL)
+- Must run inside its own Docker container.
+- Must use a **persistent Docker volume** to retain data across container restarts.
+- On initialization, create a table:
+
+```sql
+CREATE TABLE names (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL CHECK (char_length(name) <= 50),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+- Constraints:
+  - `name` cannot be empty.
+  - `name` max length = 50 characters.
+
+---
+
+### 2.2 Backend API (Flask + Gunicorn)
+- Run Flask under Gunicorn at `0.0.0.0:8000`.
+- REST endpoints exposed under `/api`:
+
+1. **POST /api/names**
+   - Request Body: `{ "name": "Alice" }`
+   - Validates non-empty `name`, max length 50.
+   - Response:  
+     - `201 Created`: `{ "id": 1, "name": "Alice", "created_at": "2025-10-01T12:00:00Z" }`  
+     - `400 Bad Request`: `{ "error": "Invalid name" }`
+
+2. **GET /api/names**
+   - Returns a list of all stored names.  
+   - Response:  
+     - `200 OK`:  
+       ```json
+       [
+         { "id": 1, "name": "Alice", "created_at": "2025-10-01T12:00:00Z" },
+         { "id": 2, "name": "Bob", "created_at": "2025-10-01T12:05:00Z" }
+       ]
+       ```
+
+3. **DELETE /api/names/{id}**
+   - Removes entry by ID.  
+   - Response:  
+     - `200 OK`: `{ "message": "Deleted" }`  
+     - `404 Not Found`: `{ "error": "Name not found" }`
+
+---
+
+### 2.3 Frontend (Nginx + HTML/JS)
+- Nginx must:
+  - Serve static files at `/` (HTML + JS).
+  - Proxy `/api/*` requests to backend service (`backend:8000`).
+- UI Requirements:
+  - **Form**: Input field + button to submit a new name.
+  - **List view**: Display all stored names.
+  - **Delete button**: Each listed name must have a delete option.
+
+---
+
+## 3. Infrastructure & Deployment
+- Use `docker-compose.yml` with **three services**:
+  - `db` → PostgreSQL with volume
+  - `backend` → Flask + Gunicorn
+  - `frontend` → Nginx serving static files + proxy
+- Networking:
+  - Use Docker Compose default network so containers can resolve each other by service name.
+  - Expose **only Nginx to host machine**:  
+    - Host `http://localhost:8080` → Nginx `80`
+
+---
+
+## 4. Non-Functional Requirements
+- **Persistence**: Data must remain available after container restarts.  
+- **Validation**: Input must be checked server-side (not only client-side).  
+- **Scalability**: System should allow scaling the backend service with `docker compose up --scale backend=3`.  
+- **Security (basic)**: No SQL injection (use parameterized queries).  
+
+---
+
+## 5. Deliverables
+- `docker-compose.yml`
+- `Dockerfile` for backend
+- `Dockerfile` for frontend (optional if just using Nginx base)
+- `nginx.conf`
+- Flask app source code
+- SQL init script
+- `index.html`, `app.js`
+- Report (½–1 page):
+  - Architecture description + diagram
+  - Request/response flow explanation
+  - Challenges and solutions
+- Screenshots:
+  - Adding a name
+  - Listing names
+  - Removing a name
+
+---
+
+✅ With this spec, you could now:
+- Generate OpenAPI definition for the backend.
+- Stub out API clients automatically.
+- Build tests to verify spec compliance.
