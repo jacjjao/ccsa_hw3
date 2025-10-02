@@ -17,11 +17,12 @@ services:
       - POSTGRES_PASSWORD=1234
       - POSTGRES_DB=names_db
     volumes:
-      - ./db-data-test:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    tmpfs:
+      - /var/lib/postgresql/data
 
   tests:
-    build: ./tests
+    build: ./backend/tests
     container_name: backend_tests
     depends_on:
       - backend 
