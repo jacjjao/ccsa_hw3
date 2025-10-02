@@ -1,0 +1,11 @@
+FROM python:3.13-bookworm
+
+COPY requirements.txt .
+
+RUN pip3 install -r requirements.txt
+
+WORKDIR /app_test
+
+COPY backend.py .
+
+CMD ["pytest", "-v", "backend.py"]
