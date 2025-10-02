@@ -6,6 +6,6 @@ RUN pip3 install -r requirements.txt
 
 WORKDIR /app_test
 
-COPY backend.py .
+COPY ./*.py .
 
-CMD ["pytest", "-v", "backend.py"]
+CMD ["pytest", "-v"]
