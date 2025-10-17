@@ -12,6 +12,7 @@ services:
     restart: always
 
   backend:
+    image: 127.0.0.1:5000/app
     build: ./backend   
     container_name: flask_backend
     command: gunicorn -b 0.0.0.0:5000 app:app  
