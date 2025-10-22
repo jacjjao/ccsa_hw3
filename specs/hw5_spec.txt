@@ -1,0 +1,136 @@
+1. Goal and Refactoring
+The main goal is to refactor your HW4 application (Nginx + Flask + PostgreSQL) to be a distributed 3-Tier web application orchestrated with Docker Swarm.
+
+
+Required Topology and Constraints 
+
+
+Refactor your HW4 app (Nginx + Flask + PostgreSQL).
+
+
+Manager (Student Laptop): Must run the web (Nginx) and api (Flask) tasks and publish port 80:80 (Ingress publish).
+
+
+
+
+
+Worker (Lab Linux Node): Must run the db (PostgreSQL) container only.
+
+
+
+
+
+It must have a Placement constraint so the DB only runs on this node.
+
+
+The DB's persistent data must be stored on this node, specifically at /var/lib/postgres-data (or a documented NFS path).
+
+
+
+
+
+Orchestration: Use Docker Swarm with a stack file (swarm/stack.yaml) for the multi-node production-like environment, while keeping Docker Compose (compose.yaml) for local development.
+
+
+2. Deliverables & Submission
+You must submit a single GitHub repo or tgz archive containing the following:
+
+Code and Configuration
+spec/: Updates to the Spec-Kit documents describing the distributed design (topology, constraints, risks, acceptance criteria). The HW4 spec structure should be maintained.
+
+
+
+compose.yaml: The local dev, single-host Compose file, which can be unchanged or improved from HW4.
+
+
+swarm/stack.yaml: The production-like, multi-node Swarm stack file, which must include:
+
+
+
+Overlay network for service-to-service traffic (e.g., networks: appnet: { driver: overlay }).
+
+
+
+
+
+Placement constraint for the DB: services.db.deploy.placement.constraints: ["node.labels.role == db"].
+
+
+
+Ingress publish: Expose web on port 80 (manager), e.g., services.web.ports: ["80:80"].
+
+
+
+Persistent Volume for the DB on the lab node (bind or local driver), bound to /var/lib/postgres-data.
+
+
+
+Service discovery: The API must reach the DB by its service name, so services.api/environment must include DATABASE_URL=... pointing to db.
+
+
+
+
+Ops Scripts: Operational scripts for deployment:
+
+ops/init-swarm.sh
+
+ops/deploy.sh
+
+ops/verify.sh
+
+ops/cleanup.sh
+
+
+ai-log/: Update from HW4 with a brief list of tools/models/timestamps and a 1-2 page report.md summarizing what changed from HW4 and why (tie changes to the spec).
+
+
+Evidence and Verification
+
+docs/EVIDENCE.md: Documentation with command output and screenshots of the verification steps.
+
+
+Must include outputs of: docker node ls, docker stack services mcapp, docker service ps mcapp_*, docker inspect mount for mcapp_db, and curl commands to /, /api/..., and /healthz, plus a short note on storage path & permissions.
+
+
+Short demo video (≤ 5 min): Showing end-to-end deployment and verification.
+
+3. Required Healthchecks and Networking Tasks
+Healthchecks 
+
+DB readiness: Use pg_isready.
+
+API /healthz: Must return {"status":"ok"}.
+
+Networking Tasks 
+
+
+
+
+Use an overlay network (e.g., appnet).
+
+
+
+Prove service discovery by showing the web container can reach the api service (e.g., from web: curl http://api:8000/healthz).
+
+
+
+Demonstrate ingress load-balancing across web replicas (show task hostnames in the page output).
+
+4. Deliverable Acceptance Criteria (Live Demo)
+The live demo must prove the following states:
+
+
+
+docker node ls shows 2+ nodes (manager + lab worker).
+
+
+docker service ps mcapp_db shows the DB running on the lab node only.
+
+
+
+curl http://<manager-ip>/ renders the web page, and a refresh shows Load Balancing (LB) across web replicas.
+
+Data persists: Insert data → restart/update DB → data still persists.
+
+
+curl http://<manager-ip>/healthz returns OK.

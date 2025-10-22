@@ -1,0 +1,3 @@
+變更的項目
+在ops中新增swarm自動化腳本腳本，原因：HW5要求
+新增docker-stack.yml，用來在docker swarm中定義和部屬services
