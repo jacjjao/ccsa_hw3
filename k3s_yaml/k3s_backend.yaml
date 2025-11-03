@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  labels:
+    app: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      nodeName: ccsa-manager
+      containers:
+        - name: backend
+          image: itzjacob/ccsa-hw:latest
+          imagePullPolicy: IfNotPresent
+          command: ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]
+          env:
+            - name: DATABASE_URL
+              value: 'postgresql://user:1234@db:5432/names_db'
+          ports:
+            - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  labels:
+    app: backend
+spec:
+  selector:
+    app: backend
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000

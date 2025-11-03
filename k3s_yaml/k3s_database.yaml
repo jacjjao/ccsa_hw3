@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db
+  labels:
+    app: db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      nodeName: ccsa
+      containers:
+        - name: postgres
+          image: postgres:17.6-bookworm
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: user
+            - name: POSTGRES_PASSWORD
+              value: "1234"
+            - name: POSTGRES_DB
+              value: names_db
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: init-script
+              mountPath: /docker-entrypoint-initdb.d/init.sql
+              readOnly: true
+      volumes:
+        - name: data
+          hostPath:
+            path: /home/jacob/Desktop/ccsa_hw3/db-data
+            type: DirectoryOrCreate
+        - name: init-script
+          hostPath:
+            path: /home/jacob/Desktop/ccsa_hw3/init.sql
+            type: File
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  labels:
+    app: db
+spec:
+  type: NodePort
+  selector:
+    app: db
+  ports:
+    - port: 5432
