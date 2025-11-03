@@ -20,23 +20,18 @@ spec:
           image: postgres:17.6-bookworm
           ports:
             - containerPort: 5432
-          env:
-            - name: POSTGRES_USER
-              value: user
-            - name: POSTGRES_PASSWORD
-              value: "1234"
-            - name: POSTGRES_DB
-              value: names_db
+          envFrom:
+            - secretRef:
+                name: postgres-secret
           volumeMounts:
-            - name: data
+            - name: postgres-storage
               mountPath: /var/lib/postgresql/data
             - name: init-script
               mountPath: /docker-entrypoint-initdb.d/init.sql
-              readOnly: true
       volumes:
-        - name: data
+        - name: postgres-storage
           hostPath:
-            path: /home/jacob/Desktop/ccsa_hw3/db-data
+            path: /home/jacob/Desktop/ccsa_hw3/db_data
             type: DirectoryOrCreate
         - name: init-script
           hostPath:
@@ -50,8 +45,9 @@ metadata:
   labels:
     app: db
 spec:
-  type: NodePort
   selector:
     app: db
   ports:
-    - port: 5432
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
