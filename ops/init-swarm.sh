@@ -1,3 +1,3 @@
-#/bin/bash
+#!/bin/bash
 
 sudo docker swarm init
